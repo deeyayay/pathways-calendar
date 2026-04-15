@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pathways Calendar</title>
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 16px;
+            background-color: #f9fafb;
+            color: #333;
+        }
+        @media (min-width: 640px) {
+            body { padding: 24px 20px 40px; }
+        }
+
+        /* ── Header ── */
+        .app-header {
+            text-align: center;
+            padding: 20px 0 16px;
+        }
+        .app-header .app-icon {
+            font-size: 2.2rem;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .app-header h1 {
+            margin: 0 0 4px;
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: #2563eb;
+            letter-spacing: -0.5px;
+        }
+        .app-header .tagline {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin: 0;
+        }
+
+        /* ── Cards ── */
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 16px;
+        }
+
+        /* ── Labels & Inputs ── */
+        label { display: block; margin-top: 12px; font-weight: 600; font-size: 0.875rem; color: #374151; }
+        textarea, input[type="text"], input[type="date"], input[type="time"] {
+            width: 100%;
+            padding: 12px;
+            margin-top: 6px;
+            border: 1.5px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem; /* prevents iOS zoom on focus */
+            font-family: inherit;
+            color: #111827;
+            transition: border-color 0.15s;
+            min-height: 44px;
+        }
+        textarea:focus, input:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+        }
+        input[type="file"] {
+            display: none;
+        }
+        input[type="checkbox"] {
+            width: auto;
+            min-height: unset;
+            margin: 0;
+        }
+
+        /* ── Buttons ── */
+        button {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            margin-top: 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 1rem;
+            font-weight: 700;
+            transition: background-color 0.15s, opacity 0.15s;
+        }
+        button:hover { background-color: #1d4ed8; }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #374151;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+        .btn-secondary:hover { background: #e2e8f0; }
+
+        .btn-success { background-color: #16a34a; }
+        .btn-success:hover { background-color: #15803d; }
+
+        /* ── Mode Toggle (pill segmented control) ── */
+        .mode-toggle {
+            display: flex;
+            background: #f1f5f9;
+            border-radius: 10px;
+            padding: 4px;
+            gap: 4px;
+            margin-bottom: 16px;
+        }
+        .mode-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.15s;
+            color: #6b7280;
+            width: auto;
+            margin-top: 0;
+        }
+        .mode-btn.active {
+            background: white;
+            color: #2563eb;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+        }
+        .mode-btn:hover { background-color: transparent; }
+        .mode-btn.active:hover { background: white; }
+
+        /* ── Paste Zone ── */
+        #pasteZone {
+            margin-top: 10px;
+            min-height: 100px;
+            padding: 16px;
+            border: 2px dashed #cbd5e1;
+            border-radius: 10px;
+            text-align: center;
+            color: #6b7280;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: border-color 0.15s, background 0.15s;
+        }
+        #pasteZone:hover, #pasteZone:active {
+            border-color: #2563eb;
+            background: #eff6ff;
+        }
+        #pasteZone .paste-icon { font-size: 1.8rem; }
+        #pasteZone .paste-hint { font-size: 0.78rem; color: #9ca3af; }
+
+        /* ── Step Indicator ── */
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.78rem;
+            margin-bottom: 14px;
+        }
+        .step { color: #9ca3af; font-weight: 600; }
+        .step.active { color: #2563eb; }
+        .step.done { color: #16a34a; }
+        .step-arrow { color: #d1d5db; }
+
+        /* ── Verification section (hidden until extraction) ── */
+        #verificationForm { display: none; }
+
+        /* ── Success card ── */
+        .success-card {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 10px;
+            padding: 20px 16px;
+            text-align: center;
+            display: none;
+            margin-top: 14px;
+        }
+        .success-card .success-icon { font-size: 2rem; }
+        .success-card .success-title { font-size: 1.1rem; font-weight: 700; color: #166534; margin: 8px 0 4px; }
+        .success-card .success-body { font-size: 0.9rem; color: #166534; margin: 0; }
+
+        /* ── Inline card errors ── */
+        .card-error {
+            color: #dc2626;
+            font-size: 0.85rem;
+            margin-top: 10px;
+            padding: 8px 10px;
+            background: #fef2f2;
+            border-radius: 6px;
+            border: 1px solid #fecaca;
+            display: none;
+        }
+
+        /* ── Loading pulse animation ── */
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.45} }
+        .loading { animation: pulse 1.2s ease-in-out infinite; display: inline-block; }
+    </style>
+</head>
+<body>
+
+    <header class="app-header">
+        <span class="app-icon">📅</span>
+        <h1>Pathways Calendar</h1>
+        <p class="tagline">Add school events in seconds</p>
+    </header>
+
+    <div class="card" id="inputSection">
+        <div class="mode-toggle">
+            <button type="button" id="modeText" class="mode-btn active" onclick="setMode('text')">📝 Paste Text</button>
+            <button type="button" id="modeImage" class="mode-btn" onclick="setMode('image')">🖼 Upload Image</button>
+        </div>
+
+        <div id="textInputArea">
+            <label for="rawText">Paste a teacher message, email, or flyer text:</label>
+            <textarea id="rawText" rows="6" placeholder='e.g., "The 5th grade science fair is Thursday, May 8 from 3–5 PM in the gym. All families welcome!"'></textarea>
+        </div>
+
+        <div id="imageInputArea" style="display:none;">
+            <label>Upload or Paste a Calendar Image or PDF:</label>
+            <input type="file" id="imageFile" accept="image/jpeg,image/png,image/webp,image/gif,application/pdf" onchange="previewImage(this)">
+            <div id="pasteZone" onclick="document.getElementById('imageFile').click()">
+                <span class="paste-icon">📁</span>
+                <span>Tap to browse for an image or PDF</span>
+                <span class="paste-hint">Ctrl+V / ⌘V to paste an image from clipboard</span>
+            </div>
+            <div id="imagePreview" style="margin-top:10px; display:none;">
+                <img id="previewImg" style="max-width:100%; border-radius:6px; border:1px solid #e5e7eb; display:none;">
+                <div id="pdfPreview" style="padding:12px; background:#f1f5f9; border-radius:6px; border:1px solid #e5e7eb; display:none;">
+                    📄 <span id="pdfFileName" style="font-size:0.9em; color:#374151;"></span>
+                </div>
+                <div style="font-size:0.8rem; color:#6b7280; margin-top:4px;" id="imageFileName"></div>
+            </div>
+        </div>
+
+        <button id="extractBtn" onclick="extractDetails()">Extract Event Details</button>
+    </div>
+
+    <div class="card" id="verificationForm">
+        <div class="step-indicator">
+            <span class="step done">✓ 1. Input</span>
+            <span class="step-arrow">→</span>
+            <span class="step active">2. Verify</span>
+            <span class="step-arrow">→</span>
+            <span class="step">3. Done</span>
+        </div>
+
+        <h3 style="margin:0 0 4px; font-size:1.1rem;">Verify Event Details</h3>
+        <p style="font-size: 0.85rem; color: #6b7280; margin:0 0 14px;">Check the AI-extracted details below before adding to the calendar.</p>
+
+        <div id="eventCards"></div>
+
+        <button id="submitBtn" onclick="submitToCalendar()" class="btn-success">Confirm &amp; Add All to Google Calendar</button>
+        <div id="successMessage" class="success-card">
+            <div class="success-icon">✅</div>
+            <div class="success-title">Done!</div>
+            <p class="success-body" id="successBody"></p>
+        </div>
+        <button id="resetButton" onclick="resetForm()" style="display:none;">Add Another Event</button>
+        <button id="backBtn" onclick="resetForm()" class="btn-secondary">← Back to Input</button>
+    </div>
+
+    <script>
+
+        // 1. PROXY URL — replace with your deployed Cloud Function URL
+        const FUNCTION_URL = 'https://pathways-proxy-60268926687.us-west1.run.app';
+
+        // 2. Mode toggle helpers
+        let currentMode = 'text';
+        function setMode(mode) {
+            currentMode = mode;
+            document.getElementById('textInputArea').style.display  = mode === 'text'  ? '' : 'none';
+            document.getElementById('imageInputArea').style.display = mode === 'image' ? '' : 'none';
+            document.getElementById('modeText').classList.toggle('active',  mode === 'text');
+            document.getElementById('modeImage').classList.toggle('active', mode === 'image');
+        }
+        function previewImage(input) {
+            const file = input.files[0];
+            if (!file) return;
+            showImagePreview(file);
+        }
+
+        function showImagePreview(file) {
+            const isPdf = file.type === 'application/pdf';
+            document.getElementById('imagePreview').style.display = 'block';
+            document.getElementById('pasteZone').style.display = 'none';
+            document.getElementById('imageFileName').innerText = file.name || (isPdf ? 'Uploaded PDF' : 'Pasted image');
+
+            if (isPdf) {
+                document.getElementById('previewImg').style.display = 'none';
+                document.getElementById('pdfPreview').style.display = 'block';
+                document.getElementById('pdfFileName').innerText = file.name;
+            } else {
+                document.getElementById('pdfPreview').style.display = 'none';
+                document.getElementById('previewImg').style.display = '';
+                const reader = new FileReader();
+                reader.onload = e => { document.getElementById('previewImg').src = e.target.result; };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Clipboard paste support
+        document.addEventListener('paste', e => {
+            if (currentMode !== 'image') return;
+            const items = Array.from(e.clipboardData?.items ?? []);
+            const imageItem = items.find(item => item.type.startsWith('image/'));
+            if (!imageItem) return;
+            e.preventDefault();
+            const file = imageItem.getAsFile();
+            // Inject into the file input so fileToBase64 can read it normally
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            document.getElementById('imageFile').files = dt.files;
+            showImagePreview(file);
+        });
+
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload  = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // 3. The Real AI Extraction Function
+        async function extractDetails() {
+            const extractButton = document.getElementById('extractBtn');
+
+            // Get today's date to give the AI context for things like "next Friday"
+            const d = new Date();
+            const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+
+            // System prompt (shared for both text and image modes)
+            const systemPrompt = `
+        You are an intelligent assistant for a community school calendar. Your job is to extract all event details from unstructured messages (like emails, texts, flyer OCR, or calendar images) and output them STRICTLY as a JSON array.
+
+        Here is the current date and time for context: ${today}
+
+        Rules for extraction:
+        1. eventTitle: Create a clear, concise title for the event.
+        2. eventDate: Must be in "YYYY-MM-DD" format. Use the current date context to determine dates like "tomorrow" or "next Friday".
+        3. allDay: Set to true if no specific time is mentioned for the event. Set to false if a time is specified.
+        4. startTime: Only required when allDay is false. Must be in 24-hour format "HH:MM". Use null when allDay is true.
+        5. endTime: Only required when allDay is false. Must be in 24-hour format "HH:MM". Use null when allDay is true.
+        6. eventLocation: The physical location or virtual link. If none is mentioned, output an empty string "".
+        7. eventNotes: A brief summary of any other important details (e.g., "Bring a water bottle", "$5 entry fee"). Keep it under 2 sentences.
+        8. intent: "create" if describing a new event. "modify" if the message is changing, moving, or rescheduling an existing event. "cancel" if an event is being cancelled or removed.
+        9. searchTitle: For "modify" and "cancel" only — the original event title to search for in the calendar. Use null for "create".
+        10. grades: The grade levels this event is intended for. Extract exactly as written and normalize to a compact string (e.g., "K-1", "6-8", "3", "3, 5"). If the message uses whole-school language ("all school", "school-wide", "all students", "all families") or mentions no specific grade at all, output an empty string "".
+        11. endDate: Only set when the event explicitly spans multiple days (e.g., "Spring Break April 13-17", "Teacher training May 1-3"). Must be in "YYYY-MM-DD" format and must be the LAST day of the event (inclusive). When endDate is set, allDay MUST be true. For single-day events, set endDate to null.
+
+        Respond ONLY with the raw JSON array. Do not include markdown formatting like \`\`\`json or any conversational text.
+        Even if only one event is found, always return a JSON array.
+
+        Output Schema:
+        [
+          {
+            "intent": "create" | "modify" | "cancel",
+            "searchTitle": "string | null",
+            "eventTitle": "string",
+            "eventDate": "YYYY-MM-DD",
+            "endDate": "YYYY-MM-DD" | null,
+            "allDay": true | false,
+            "startTime": "HH:MM" | null,
+            "endTime": "HH:MM" | null,
+            "eventLocation": "string",
+            "eventNotes": "string",
+            "grades": "string"
+          }
+        ]`;
+
+            // Build request body based on mode
+            let requestBody;
+            if (currentMode === 'image') {
+                const file = document.getElementById('imageFile').files[0];
+                if (!file) return alert('Please select an image first.');
+                extractButton.innerHTML = '<span class="loading">⏳</span> Extracting Details…';
+                extractButton.disabled = true;
+                const base64 = await fileToBase64(file);
+                requestBody = {
+                    prompt: systemPrompt,
+                    imageData: { mimeType: file.type, data: base64 },
+                };
+            } else {
+                const rawText = document.getElementById('rawText').value;
+                if (!rawText) return alert('Please paste a message first.');
+                extractButton.innerHTML = '<span class="loading">⏳</span> Extracting Details…';
+                extractButton.disabled = true;
+                requestBody = { prompt: systemPrompt + `\n\n        Here is the message to process:\n        ${rawText}` };
+            }
+
+            try {
+                // Send the request via the proxy
+                const response = await fetch(`${FUNCTION_URL}/extract`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestBody),
+                });
+
+                if (!response.ok) {
+                    const errBody = await response.json().catch(() => ({}));
+                    console.error('Gemini error body:', errBody);
+                    throw new Error(`Gemini API error ${response.status}: ${errBody?.error?.message || 'see console for details'}`);
+                }
+                const data = await response.json();
+
+                const candidates = data?.candidates;
+                if (!candidates?.length) throw new Error("No response from AI. Please try again.");
+
+                // Extract the AI's text response and parse it as JSON
+                let aiResponse = candidates[0].content.parts[0].text;
+
+                // Failsafe: Sometimes the AI might still wrap the response in markdown blocks. This strips them out.
+                aiResponse = aiResponse.replace(/```json/g, '').replace(/```/g, '').trim();
+
+                let eventData;
+                try {
+                    eventData = JSON.parse(aiResponse);
+                } catch {
+                    throw new Error("AI returned unparseable data. Try rephrasing your input.");
+                }
+
+                // Split creates from modify/cancel (which need a calendar search first)
+                const allEvents = Array.isArray(eventData) ? eventData : [eventData];
+                const createEvents = allEvents.filter(e => !e.intent || e.intent === 'create');
+                const searchEvents = allEvents.filter(e => e.intent === 'modify' || e.intent === 'cancel');
+
+                renderEventCards(createEvents);
+
+                for (let i = 0; i < searchEvents.length; i++) {
+                    const ev = searchEvents[i];
+                    const cardIndex = createEvents.length + i;
+                    renderSearchingCard(ev, cardIndex);
+                    const matches = await searchCalendar(ev.searchTitle);
+                    updateCardWithMatches(ev, matches, cardIndex);
+                }
+
+                updateSubmitButton();
+
+                // Hide input section, show verification section
+                document.getElementById('inputSection').style.display = 'none';
+                document.getElementById('verificationForm').style.display = 'block';
+
+            } catch (error) {
+                alert("Oops! There was an error extracting the details. Please try again or fill it out manually. Error: " + error.message);
+                extractButton.innerHTML = "Extract Event Details";
+                extractButton.disabled = false;
+            }
+        }
+
+        function escapeHtml(str) {
+            return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        async function searchCalendar(q) {
+            const res = await fetch(`${FUNCTION_URL}/search?q=${encodeURIComponent(q)}`);
+            const data = await res.json();
+            return data.matches ?? [];
+        }
+
+        function showCardError(card, msg) {
+            let err = card.querySelector('.card-error');
+            if (!err) {
+                err = document.createElement('div');
+                err.className = 'card-error';
+                card.appendChild(err);
+            }
+            err.textContent = msg;
+            err.style.display = 'block';
+            card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function clearCardError(card) {
+            const err = card.querySelector('.card-error');
+            if (err) err.style.display = 'none';
+        }
+
+        function renderSearchingCard(ev, cardIndex) {
+            const intent = ev.intent || 'create';
+            const s = cardStyles(intent, cardIndex);
+            const container = document.getElementById('eventCards');
+            const card = document.createElement('div');
+            card.className = 'event-card';
+            card.dataset.index = cardIndex;
+            card.dataset.action = intent;
+            card.dataset.searchTitle = ev.searchTitle ?? '';
+            card.dataset.geminiData = JSON.stringify(ev);
+            card.style.cssText = `border:1px solid ${s.border}; border-radius:10px; padding:15px; margin-bottom:15px; background:${s.bg};`;
+            card.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <div style="font-weight:700; color:${s.accent}; font-size:0.9rem;">${s.label}</div>
+                    <button type="button" onclick="removeCard(this)" style="background:none; border:none; color:#9ca3af; font-size:1.2em; cursor:pointer; padding:0; margin:0; width:auto; line-height:1;" title="Remove this event">✕</button>
+                </div>
+                <div style="font-size:0.85em; color:#666;">Searching calendar for: <strong>${escapeHtml(ev.searchTitle)}</strong>…</div>
+            `;
+            container.appendChild(card);
+        }
+
+        function updateCardWithMatches(ev, matches, cardIndex) {
+            const card = document.querySelector(`.event-card[data-index="${cardIndex}"]`);
+            if (!card) return;
+            const intent = ev.intent;
+            const s = cardStyles(intent, cardIndex);
+            const isModify = intent === 'modify';
+
+            let matchesHtml;
+            if (matches.length === 0) {
+                matchesHtml = `<div style="color:#dc2626; font-size:0.85em; margin-top:8px;">No upcoming events found matching "<strong>${escapeHtml(ev.searchTitle)}</strong>". Check the title and try again.</div>`;
+            } else {
+                const rows = matches.map((m, mi) => {
+                    const start = new Date(m.startTime);
+                    const dateStr = start.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
+                    const timeStr = start.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
+                    return `<div class="match-row" data-event-id="${escapeHtml(m.eventId)}" data-match-index="${mi}"
+                        onclick="selectMatch(this, ${cardIndex})"
+                        style="padding:8px 10px; margin-top:6px; border:2px solid #e5e7eb; border-radius:6px; cursor:pointer; font-size:0.875em;">
+                        <strong>${escapeHtml(m.title)}</strong> &mdash; ${dateStr} at ${timeStr}
+                    </div>`;
+                }).join('');
+                matchesHtml = `
+                    <div style="font-size:0.85em; color:#666; margin-bottom:4px;">Select the event to ${isModify ? 'modify' : 'remove'}:</div>
+                    ${rows}
+                `;
+            }
+
+            const editFields = isModify ? `
+                <div style="margin-top:12px; padding-top:12px; border-top:1px solid ${s.border};">
+                    <div style="font-size:0.8em; font-weight:700; color:#6b7280; margin-bottom:6px; letter-spacing:0.05em;">NEW VALUES</div>
+                    <label>Title</label>
+                    <input type="text" class="ev-title" value="${escapeHtml(ev.eventTitle)}">
+                    <label>Start Date</label>
+                    <input type="date" class="ev-date" value="${escapeHtml(ev.eventDate)}">
+                    <div class="ev-enddate-field" style="${ev.allDay && ev.endDate ? '' : 'display:none;'}">
+                        <label>End Date</label>
+                        <input type="date" class="ev-enddate" value="${escapeHtml(ev.endDate ?? '')}">
+                    </div>
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal; margin-top:12px;">
+                        <input type="checkbox" class="ev-allday" ${ev.allDay ? 'checked' : ''} onchange="toggleTimeFields(this); toggleEndDate(this);">
+                        All Day Event
+                    </label>
+                    <div class="ev-time-fields" style="${ev.allDay ? 'display:none;' : ''}">
+                        <label>Start Time</label>
+                        <input type="time" class="ev-start" value="${escapeHtml(ev.startTime ?? '')}">
+                        <label>End Time</label>
+                        <input type="time" class="ev-end" value="${escapeHtml(ev.endTime ?? '')}">
+                    </div>
+                    <label>Location</label>
+                    <input type="text" class="ev-location" value="${escapeHtml(ev.eventLocation)}">
+                    <label>Notes (Optional)</label>
+                    <textarea class="ev-notes" rows="2">${escapeHtml(ev.eventNotes)}</textarea>
+                    <label>Grades (e.g. K-1, 3, 6-8)</label>
+                    <input type="text" class="ev-grades" placeholder="Leave blank if all grades" value="${escapeHtml(ev.grades ?? '')}">
+                </div>` : '';
+
+            card.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <div style="font-weight:700; color:${s.accent}; font-size:0.9rem;">${s.label}</div>
+                    <button type="button" onclick="removeCard(this)" style="background:none; border:none; color:#9ca3af; font-size:1.2em; cursor:pointer; padding:0; margin:0; width:auto; line-height:1;" title="Remove this event">✕</button>
+                </div>
+                ${matchesHtml}
+                ${editFields}
+            `;
+        }
+
+        function selectMatch(row, cardIndex) {
+            // Deselect all rows in this card
+            const card = document.querySelector(`.event-card[data-index="${cardIndex}"]`);
+            card.querySelectorAll('.match-row').forEach(r => {
+                r.style.borderColor = '#e5e7eb';
+                r.style.background = '';
+            });
+            // Select clicked row
+            row.style.borderColor = '#2563eb';
+            row.style.background = '#eff6ff';
+            card.dataset.eventId = row.dataset.eventId;
+        }
+
+        function toggleTimeFields(checkbox) {
+            const timeFields = checkbox.closest('.event-card').querySelector('.ev-time-fields');
+            timeFields.style.display = checkbox.checked ? 'none' : '';
+        }
+        function toggleEndDate(checkbox) {
+            const field = checkbox.closest('.event-card').querySelector('.ev-enddate-field');
+            if (field) field.style.display = checkbox.checked ? '' : 'none';
+        }
+
+        function removeCard(btn) {
+            const card = btn.closest('.event-card');
+            card.remove();
+            const remaining = document.querySelectorAll('.event-card');
+            if (remaining.length === 0) {
+                resetForm();
+            } else {
+                updateSubmitButton();
+            }
+        }
+
+        function updateSubmitButton() {
+            const cards = document.querySelectorAll('.event-card');
+            const actions = Array.from(cards).map(c => c.dataset.action || 'create');
+            const allCancel = actions.every(a => a === 'cancel');
+            const allModify = actions.every(a => a === 'modify');
+            const allCreate = actions.every(a => a === 'create');
+            const btn = document.getElementById('submitBtn');
+            if (allCancel)      btn.innerText = 'Confirm & Remove from Calendar';
+            else if (allModify) btn.innerText = 'Confirm & Update Calendar';
+            else if (allCreate) btn.innerText = 'Confirm & Add All to Google Calendar';
+            else                btn.innerText = 'Confirm & Submit to Google Calendar';
+        }
+
+        function cardStyles(intent, cardIndex) {
+            const n = cardIndex + 1;
+            return {
+                create: { accent:'#2563eb', border:'#e5e7eb', bg:'white',   label:`New Event ${n}` },
+                modify: { accent:'#ea580c', border:'#fed7aa', bg:'#fff7ed', label:`Modify Event ${n}` },
+                cancel: { accent:'#dc2626', border:'#fecaca', bg:'#fef2f2', label:`Cancel Event ${n}` },
+            }[intent] || { accent:'#2563eb', border:'#e5e7eb', bg:'white', label:`Event ${n}` };
+        }
+
+        function renderEventCards(events) {
+            const container = document.getElementById('eventCards');
+            events.forEach((ev, i) => {
+                const s = cardStyles('create', i);
+                const card = document.createElement('div');
+                card.className = 'event-card';
+                card.dataset.index = i;
+                card.dataset.action = 'create';
+                card.style.cssText = `border:1px solid ${s.border}; border-radius:10px; padding:15px; margin-bottom:15px; background:${s.bg};`;
+                card.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <div style="font-weight:700; color:${s.accent}; font-size:0.9rem;">${s.label}</div>
+                        <button type="button" onclick="removeCard(this)" style="background:none; border:none; color:#9ca3af; font-size:1.2em; cursor:pointer; padding:0; margin:0; width:auto; line-height:1;" title="Remove this event">✕</button>
+                    </div>
+                    <label>Title</label>
+                    <input type="text" class="ev-title" value="${escapeHtml(ev.eventTitle)}">
+                    <label>Start Date</label>
+                    <input type="date" class="ev-date" value="${escapeHtml(ev.eventDate)}">
+                    <div class="ev-enddate-field" style="${ev.allDay && ev.endDate ? '' : 'display:none;'}">
+                        <label>End Date</label>
+                        <input type="date" class="ev-enddate" value="${escapeHtml(ev.endDate ?? '')}">
+                    </div>
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal; margin-top:12px;">
+                        <input type="checkbox" class="ev-allday" ${ev.allDay ? 'checked' : ''} onchange="toggleTimeFields(this); toggleEndDate(this);">
+                        All Day Event
+                    </label>
+                    <div class="ev-time-fields" style="${ev.allDay ? 'display:none;' : ''}">
+                        <label>Start Time</label>
+                        <input type="time" class="ev-start" value="${escapeHtml(ev.startTime ?? '')}">
+                        <label>End Time</label>
+                        <input type="time" class="ev-end" value="${escapeHtml(ev.endTime ?? '')}">
+                    </div>
+                    <label>Location</label>
+                    <input type="text" class="ev-location" value="${escapeHtml(ev.eventLocation)}">
+                    <label>Notes (Optional)</label>
+                    <textarea class="ev-notes" rows="2">${escapeHtml(ev.eventNotes)}</textarea>
+                    <label>Grades (e.g. K-1, 3, 6-8)</label>
+                    <input type="text" class="ev-grades" placeholder="Leave blank if all grades" value="${escapeHtml(ev.grades ?? '')}">
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function buildNotes(card) {
+            const grades = card.querySelector('.ev-grades')?.value.trim() ?? '';
+            const notes  = card.querySelector('.ev-notes').value.trim();
+            if (!grades) return notes;
+            return notes ? `Grades: ${grades}\n${notes}` : `Grades: ${grades}`;
+        }
+
+        // 3. Send Data to Google Calendar
+        async function submitToCalendar() {
+            const cards = document.querySelectorAll('.event-card');
+            const events = [];
+
+            for (const card of cards) {
+                clearCardError(card);
+                const action = card.dataset.action || 'create';
+                const index  = Number(card.dataset.index);
+
+                if (action === 'cancel') {
+                    if (!card.dataset.eventId) {
+                        showCardError(card, 'Please select a matching calendar event to cancel.');
+                        return;
+                    }
+                    events.push({ action: 'cancel', eventId: card.dataset.eventId });
+
+                } else if (action === 'modify') {
+                    if (!card.dataset.eventId) {
+                        showCardError(card, 'Please select a matching calendar event to modify.');
+                        return;
+                    }
+                    const title  = card.querySelector('.ev-title').value.trim();
+                    const date   = card.querySelector('.ev-date').value;
+                    const allDay = card.querySelector('.ev-allday').checked;
+                    if (!title || !date) {
+                        showCardError(card, 'Please fill in Title and Date.');
+                        return;
+                    }
+                    if (!allDay) {
+                        const start = card.querySelector('.ev-start').value;
+                        const end   = card.querySelector('.ev-end').value;
+                        if (!start || !end) { showCardError(card, 'Please fill in Start and End Time.'); return; }
+                        if (start >= end)   { showCardError(card, 'End time must be after start time.'); return; }
+                    }
+                    const endDate = allDay ? (card.querySelector('.ev-enddate')?.value || null) : null;
+                    if (allDay && endDate && endDate < date) {
+                        showCardError(card, 'End date must be on or after the start date.');
+                        return;
+                    }
+                    const ev = {
+                        action: 'modify', eventId: card.dataset.eventId, title, allDay, date,
+                        location: card.querySelector('.ev-location').value,
+                        notes:    buildNotes(card),
+                    };
+                    if (allDay && endDate) ev.endDate = endDate;
+                    if (!allDay) {
+                        const start = card.querySelector('.ev-start').value;
+                        const end   = card.querySelector('.ev-end').value;
+                        ev.startTime = `${date}T${start}:00`;
+                        ev.endTime   = `${date}T${end}:00`;
+                    }
+                    events.push(ev);
+
+                } else {
+                    const title  = card.querySelector('.ev-title').value.trim();
+                    const date   = card.querySelector('.ev-date').value;
+                    const allDay = card.querySelector('.ev-allday').checked;
+                    if (!title || !date) {
+                        showCardError(card, 'Please fill in Title and Date.');
+                        return;
+                    }
+                    if (!allDay) {
+                        const start = card.querySelector('.ev-start').value;
+                        const end   = card.querySelector('.ev-end').value;
+                        if (!start || !end) { showCardError(card, 'Please fill in Start and End Time.'); return; }
+                        if (start >= end)   { showCardError(card, 'End time must be after start time.'); return; }
+                    }
+                    const endDate = allDay ? (card.querySelector('.ev-enddate')?.value || null) : null;
+                    if (allDay && endDate && endDate < date) {
+                        showCardError(card, 'End date must be on or after the start date.');
+                        return;
+                    }
+                    const ev = {
+                        action: 'create', title, allDay, date,
+                        location: card.querySelector('.ev-location').value,
+                        notes:    buildNotes(card),
+                    };
+                    if (allDay && endDate) ev.endDate = endDate;
+                    if (!allDay) {
+                        const start = card.querySelector('.ev-start').value;
+                        const end   = card.querySelector('.ev-end').value;
+                        ev.startTime = `${date}T${start}:00`;
+                        ev.endTime   = `${date}T${end}:00`;
+                    }
+                    events.push(ev);
+                }
+            }
+
+            const button = document.getElementById('submitBtn');
+            button.innerHTML = '<span class="loading">⏳</span> Adding to Calendar…';
+            button.disabled = true;
+
+            try {
+                console.log('Submitting payload:', JSON.stringify({ events }, null, 2));
+                const submitRes = await fetch(`${FUNCTION_URL}/submit`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ events }),
+                });
+                const submitData = await submitRes.json();
+                console.log('Submit response:', JSON.stringify(submitData, null, 2));
+
+                const count = events.length;
+                const allCancel = events.every(e => e.action === 'cancel');
+                const allModify = events.every(e => e.action === 'modify');
+                const verb = allCancel ? 'removed from' : allModify ? 'updated on' : 'added to';
+
+                // Update step indicator to show Done
+                const stepIndicator = document.querySelector('.step-indicator');
+                if (stepIndicator) {
+                    stepIndicator.innerHTML = `
+                        <span class="step done">✓ 1. Input</span>
+                        <span class="step-arrow">→</span>
+                        <span class="step done">✓ 2. Verify</span>
+                        <span class="step-arrow">→</span>
+                        <span class="step active">3. Done</span>
+                    `;
+                }
+
+                document.getElementById('successBody').innerText =
+                    `${count} event${count > 1 ? 's' : ''} successfully ${verb} the shared calendar!`;
+                document.getElementById('successMessage').style.display = 'block';
+                document.getElementById('resetButton').style.display = 'block';
+                document.getElementById('backBtn').style.display = 'none';
+                button.style.display = 'none';
+
+            } catch (error) {
+                alert('There was an error adding the events: ' + error.message);
+                button.innerHTML = 'Confirm & Add All to Google Calendar';
+                button.disabled = false;
+            }
+        }
+
+        function resetForm() {
+            // Clear inputs
+            document.getElementById('rawText').value = '';
+            document.getElementById('imageFile').value = '';
+            document.getElementById('imagePreview').style.display = 'none';
+            document.getElementById('previewImg').style.display = '';
+            document.getElementById('pdfPreview').style.display = 'none';
+            document.getElementById('pasteZone').style.display = '';
+
+            // Clear event cards
+            document.getElementById('eventCards').innerHTML = '';
+
+            // Reset success message
+            const msg = document.getElementById('successMessage');
+            msg.style.display = 'none';
+            document.getElementById('successBody').innerText = '';
+
+            // Reset buttons
+            document.getElementById('resetButton').style.display = 'none';
+            document.getElementById('backBtn').style.display = '';
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.style.display = '';
+            submitBtn.innerHTML = 'Confirm & Add to Google Calendar';
+            submitBtn.disabled = false;
+
+            // Reset extract button
+            const extractBtn = document.getElementById('extractBtn');
+            extractBtn.innerHTML = 'Extract Event Details';
+            extractBtn.disabled = false;
+
+            // Reset step indicator
+            const stepIndicator = document.querySelector('.step-indicator');
+            if (stepIndicator) {
+                stepIndicator.innerHTML = `
+                    <span class="step done">✓ 1. Input</span>
+                    <span class="step-arrow">→</span>
+                    <span class="step active">2. Verify</span>
+                    <span class="step-arrow">→</span>
+                    <span class="step">3. Done</span>
+                `;
+            }
+
+            // Switch views
+            document.getElementById('verificationForm').style.display = 'none';
+            document.getElementById('inputSection').style.display = 'block';
+
+            // Reset mode to text
+            setMode('text');
+        }
+    </script>
+</body>
+</html>
