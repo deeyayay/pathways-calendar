@@ -285,6 +285,21 @@
 
         .fc table { border-collapse: collapse; }
         .fc .fc-scrollgrid { border-radius: 8px; overflow: hidden; }
+
+        /* Prevent toolbar from wrapping */
+        .fc .fc-toolbar { flex-wrap: nowrap; align-items: center; gap: 4px; }
+        .fc .fc-toolbar-chunk { display: flex; align-items: center; gap: 2px; }
+
+        /* Tighter button groups */
+        .fc .fc-button-group .fc-button { border-radius: 0 !important; }
+        .fc .fc-button-group .fc-button:first-child { border-radius: 8px 0 0 8px !important; }
+        .fc .fc-button-group .fc-button:last-child  { border-radius: 0 8px 8px 0 !important; }
+
+        /* Truncate long event titles cleanly */
+        .fc-daygrid-event .fc-event-title { overflow: hidden; text-overflow: ellipsis; }
+
+        /* Slightly smaller day numbers to free up cell space */
+        .fc .fc-daygrid-day-number { padding: 2px 4px !important; }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
 </head>
@@ -945,8 +960,7 @@
         }
     </script>
 
-    <div class="card" style="padding: 16px;">
-        <h3 style="margin: 0 0 12px; font-size: 1rem; font-weight: 700; color: #374151;">📅 Shared Calendar</h3>
+    <div class="card" style="padding: 12px 8px 8px;">
         <div id="pathways-calendar"></div>
     </div>
 
@@ -965,13 +979,15 @@
 
                 headerToolbar: isMobile
                     ? { left: 'prev', center: 'title', right: 'next' }
-                    : { left: 'prev,next today', center: 'title', right: 'dayGridMonth,listMonth' },
+                    : { left: 'prev,next', center: 'title', right: 'dayGridMonth,listMonth' },
 
                 height: 'auto',
-                contentHeight: isMobile ? 'auto' : 380,
+                contentHeight: isMobile ? 'auto' : 400,
 
-                dayMaxEventRows: 3,
+                dayMaxEventRows: 2,
                 dayMaxEvents: true,
+
+                eventTimeFormat: { hour: 'numeric', minute: '2-digit', omitZeroMinute: true, meridiem: 'narrow' },
                 editable: false,
                 selectable: false,
                 locale: 'en',
@@ -1001,7 +1017,7 @@
                     } else if (!nowMobile && currentView === 'listMonth') {
                         calendar.changeView('dayGridMonth');
                         calendar.setOption('headerToolbar',
-                            { left: 'prev,next today', center: 'title', right: 'dayGridMonth,listMonth' });
+                            { left: 'prev,next', center: 'title', right: 'dayGridMonth,listMonth' });
                     }
                 }, 200);
             });
