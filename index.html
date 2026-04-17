@@ -287,7 +287,6 @@
         .fc .fc-scrollgrid { border-radius: 8px; overflow: hidden; }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/google-calendar@6.1.15/index.global.min.js"></script>
 </head>
 <body>
 
@@ -952,45 +951,14 @@
     </div>
 
     <script>
-        // ── FullCalendar — Google Calendar Integration ────────────────────────
-        //
-        // SETUP REQUIRED: Replace the placeholder below with a real Google
-        // Calendar API key. Steps (free, ~5 minutes):
-        //
-        //  1. Go to https://console.cloud.google.com/
-        //  2. Create or select a project
-        //  3. APIs & Services > Library > search "Google Calendar API" > Enable
-        //  4. APIs & Services > Credentials > + Create Credentials > API key
-        //  5. Click "Edit API key" to restrict it:
-        //       Application restrictions: "Websites (HTTP referrers)"
-        //         Add: https://your-site-domain.com/*
-        //              http://localhost/*
-        //       API restrictions: "Restrict key" > select "Google Calendar API"
-        //  6. Save, then paste the key below.
-        //
-        // COST: Google Calendar API free tier = 1,000,000 requests/day.
-        //   A small school calendar uses ~100 requests/day (0.01% of quota).
-        // ─────────────────────────────────────────────────────────────────────
-        const GCAL_API_KEY = 'YOUR_GOOGLE_CALENDAR_API_KEY_HERE';
-        const GCAL_ID      = 'shamrockpathways@gmail.com';
-
         document.addEventListener('DOMContentLoaded', function () {
             const calendarEl = document.getElementById('pathways-calendar');
             if (!calendarEl) return;
 
-            if (GCAL_API_KEY === 'YOUR_GOOGLE_CALENDAR_API_KEY_HERE') {
-                calendarEl.innerHTML =
-                    '<div style="padding:20px; text-align:center; color:#6b7280; font-size:0.9rem;">' +
-                    '⚙️ Calendar setup required — see HTML comments for API key instructions.' +
-                    '</div>';
-                return;
-            }
-
             const isMobile = window.innerWidth < 640;
 
             const calendar = new FullCalendar.Calendar(calendarEl, {
-                googleCalendarApiKey: GCAL_API_KEY,
-                events: { googleCalendarId: GCAL_ID },
+                events: FUNCTION_URL + '/events',
                 timeZone: 'America/Los_Angeles',
 
                 initialView: isMobile ? 'listMonth' : 'dayGridMonth',
@@ -1008,13 +976,6 @@
                 selectable: false,
                 locale: 'en',
                 firstDay: 0,
-
-                eventClick: function (info) {
-                    info.jsEvent.preventDefault();
-                    if (info.event.url) {
-                        window.open(info.event.url, '_blank', 'noopener,noreferrer');
-                    }
-                },
 
                 loading: function (isLoading) {
                     if (isLoading) {
