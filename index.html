@@ -209,99 +209,7 @@
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.45} }
         .loading { animation: pulse 1.2s ease-in-out infinite; display: inline-block; }
 
-        /* ── FullCalendar overrides ─────────────────────────────────── */
-        #pathways-calendar { min-height: 120px; }
-
-        #pathways-calendar[data-loading]::before {
-            content: 'Loading calendar…';
-            display: block;
-            text-align: center;
-            padding: 32px 0;
-            font-size: 0.875rem;
-            color: #9ca3af;
-            animation: pulse 1.2s ease-in-out infinite;
-        }
-
-        .fc-event, .fc-event-main {
-            background-color: #2563eb !important;
-            border-color: #2563eb !important;
-            color: white !important;
-            border-radius: 4px;
-        }
-
-        .fc-list-event:hover td { background: #eff6ff !important; }
-        .fc-list-event-dot { border-color: #2563eb !important; }
-
-        .fc-toolbar-title {
-            font-size: 1rem !important;
-            font-weight: 700 !important;
-            color: #374151 !important;
-        }
-
-        .fc .fc-button {
-            background: #f1f5f9 !important;
-            border-color: #d1d5db !important;
-            color: #374151 !important;
-            font-weight: 600 !important;
-            border-radius: 8px !important;
-            font-size: 0.875rem !important;
-            padding: 6px 10px !important;
-            box-shadow: none !important;
-            text-transform: none !important;
-        }
-        .fc .fc-button:hover { background: #e2e8f0 !important; }
-        .fc .fc-button-active,
-        .fc .fc-button:focus {
-            background: #2563eb !important;
-            color: white !important;
-            border-color: #2563eb !important;
-            box-shadow: 0 0 0 3px rgba(37,99,235,0.12) !important;
-        }
-
-        .fc .fc-day-today { background: #eff6ff !important; }
-        .fc .fc-day-today .fc-daygrid-day-number {
-            color: #2563eb !important;
-            font-weight: 700 !important;
-        }
-
-        .fc .fc-col-header-cell-cushion,
-        .fc .fc-daygrid-day-number {
-            color: #6b7280;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-
-        .fc-list-day-cushion {
-            background: #f1f5f9 !important;
-            color: #374151 !important;
-            font-weight: 700 !important;
-            font-size: 0.8rem !important;
-        }
-
-        @media (max-width: 400px) {
-            .fc-toolbar-title { font-size: 0.9rem !important; }
-            .fc .fc-button { padding: 5px 8px !important; font-size: 0.8rem !important; }
-        }
-
-        .fc table { border-collapse: collapse; }
-        .fc .fc-scrollgrid { border-radius: 8px; overflow: hidden; }
-
-        /* Prevent toolbar from wrapping */
-        .fc .fc-toolbar { flex-wrap: nowrap; align-items: center; gap: 4px; }
-        .fc .fc-toolbar-chunk { display: flex; align-items: center; gap: 2px; }
-
-        /* Tighter button groups */
-        .fc .fc-button-group .fc-button { border-radius: 0 !important; }
-        .fc .fc-button-group .fc-button:first-child { border-radius: 8px 0 0 8px !important; }
-        .fc .fc-button-group .fc-button:last-child  { border-radius: 0 8px 8px 0 !important; }
-
-        /* Truncate long event titles cleanly */
-        .fc-daygrid-event .fc-event-title { overflow: hidden; text-overflow: ellipsis; }
-
-        /* Slightly smaller day numbers to free up cell space */
-        .fc .fc-daygrid-day-number { padding: 2px 4px !important; }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
 </head>
 <body>
 
@@ -960,69 +868,14 @@
         }
     </script>
 
-    <div class="card" style="padding: 12px 8px 8px;">
-        <div id="pathways-calendar"></div>
+    <div class="card" style="padding: 16px;">
+        <h3 style="margin: 0 0 12px; font-size: 1rem; font-weight: 700; color: #374151;">📅 Shared Calendar</h3>
+        <div style="position:relative; width:100%; padding-top:75%; overflow:hidden; border-radius:8px;">
+            <iframe src="https://calendar.google.com/calendar/embed?src=shamrockpathways%40gmail.com&ctz=America%2FLos_Angeles"
+                style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;"
+                frameborder="0" scrolling="no"></iframe>
+        </div>
     </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const calendarEl = document.getElementById('pathways-calendar');
-            if (!calendarEl) return;
-
-            const isMobile = window.innerWidth < 640;
-
-            const calendar = new FullCalendar.Calendar(calendarEl, {
-                events: FUNCTION_URL + '/events',
-                timeZone: 'America/Los_Angeles',
-
-                initialView: isMobile ? 'listMonth' : 'dayGridMonth',
-
-                headerToolbar: isMobile
-                    ? { left: 'prev', center: 'title', right: 'next' }
-                    : { left: 'prev,next', center: 'title', right: 'dayGridMonth,listMonth' },
-
-                height: 'auto',
-                contentHeight: isMobile ? 'auto' : 400,
-
-                dayMaxEventRows: 2,
-                dayMaxEvents: true,
-
-                eventTimeFormat: { hour: 'numeric', minute: '2-digit', omitZeroMinute: true, meridiem: 'narrow' },
-                editable: false,
-                selectable: false,
-                locale: 'en',
-                firstDay: 0,
-
-                loading: function (isLoading) {
-                    if (isLoading) {
-                        calendarEl.setAttribute('data-loading', 'true');
-                    } else {
-                        calendarEl.removeAttribute('data-loading');
-                    }
-                },
-            });
-
-            calendar.render();
-
-            let resizeTimer;
-            window.addEventListener('resize', function () {
-                clearTimeout(resizeTimer);
-                resizeTimer = setTimeout(function () {
-                    const nowMobile = window.innerWidth < 640;
-                    const currentView = calendar.view.type;
-                    if (nowMobile && currentView === 'dayGridMonth') {
-                        calendar.changeView('listMonth');
-                        calendar.setOption('headerToolbar',
-                            { left: 'prev', center: 'title', right: 'next' });
-                    } else if (!nowMobile && currentView === 'listMonth') {
-                        calendar.changeView('dayGridMonth');
-                        calendar.setOption('headerToolbar',
-                            { left: 'prev,next', center: 'title', right: 'dayGridMonth,listMonth' });
-                    }
-                }, 200);
-            });
-        });
-    </script>
 
     <footer style="text-align:center; padding: 16px 0 8px; font-size:0.85rem; color:#6b7280;">
         <a href="https://calendar.google.com/calendar/u/0?cid=c2hhbXJvY2twYXRod2F5c0BnbWFpbC5jb20" target="_blank" rel="noopener noreferrer" style="color:#2563eb; text-decoration:none; font-weight:600;">Open in Google Calendar</a>
